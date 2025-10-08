@@ -42,7 +42,7 @@ export async function continueConversation(history: Message[]) {
 
   const { text, toolResults } = await generateText({
     model: openrouter('openai/gpt-oss-20b:free'),
-    system: 'You are a friendly weather assistant!',
+    system: 'You are AI tutor',
     messages: history,
     tools: {
       showWeather: {
