@@ -2,7 +2,7 @@
 
 import { createStreamableValue } from 'ai/rsc';
 import { CoreMessage, streamText } from 'ai';
-import { openai } from '@ai-sdk/openai';
+import { createOpenAI } from '@ai-sdk/openai';
 import { Weather } from '@/components/weather';
 import { generateText } from 'ai';
 import { createStreamableUI } from 'ai/rsc';
@@ -18,8 +18,13 @@ export interface Message {
 
 // Streaming Chat 
 export async function continueTextConversation(messages: CoreMessage[]) {
+  const openrouter = createOpenAI({
+    baseURL: 'https://openrouter.ai/api/v1',
+    apiKey: process.env.OPENROUTER_API_KEY,
+  });
+
   const result = await streamText({
-    model: openai('gpt-4-turbo'),
+    model: openrouter('openai/gpt-oss-20b:free'),
     messages,
   });
 
@@ -30,9 +35,13 @@ export async function continueTextConversation(messages: CoreMessage[]) {
 // Gen UIs 
 export async function continueConversation(history: Message[]) {
   const stream = createStreamableUI();
+  const openrouter = createOpenAI({
+    baseURL: 'https://openrouter.ai/api/v1',
+    apiKey: process.env.OPENROUTER_API_KEY,
+  });
 
   const { text, toolResults } = await generateText({
-    model: openai('gpt-3.5-turbo'),
+    model: openrouter('openai/gpt-oss-20b:free'),
     system: 'You are a friendly weather assistant!',
     messages: history,
     tools: {
@@ -58,7 +67,7 @@ export async function continueConversation(history: Message[]) {
       {
         role: 'assistant' as const,
         content:
-          text || toolResults.map(toolResult => toolResult.result).join(),
+          text || (toolResults && toolResults.length > 0 ? toolResults.map((tr: any) => tr.result).join() : ''),
         display: stream.value,
       },
     ],
@@ -67,6 +76,6 @@ export async function continueConversation(history: Message[]) {
 
 // Utils
 export async function checkAIAvailability() {
-  const envVarExists = !!process.env.OPENAI_API_KEY;
+  const envVarExists = !!process.env.OPENROUTER_API_KEY;
   return envVarExists;
 }
